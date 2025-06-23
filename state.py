@@ -5,17 +5,45 @@ from sympy.physics.quantum.gate import IdentityGate, X, Y, Z, H, S, T, CNOT, CPH
 
 
 def dephase(state: Expr) -> Expr:
-    res = qubit_to_matrix(state)
-    glob_phase = 1
-    for elem in res:
-        if elem != 0:
-            glob_phase = sign(elem)
-            break
+    '''
+    Removes the global phase from a SymPy statevector by dividing by the phase of the first component
 
-    return state / glob_phase
-    
+    :param state: The SymPy statevector to be dephased
+    :type state: Expr
 
-def apply(state: Expr, operation: Expr = None, dp=False) -> Expr:
+    :return: state without the global phase
+    :rtype: Expr
+    '''
+    try:
+        res = qubit_to_matrix(state)
+        glob_phase = 1
+        for elem in res:
+            if elem != 0:
+                glob_phase = sign(elem)
+                break
+
+        return state / glob_phase
+    except:
+        return state
+
+
+def apply(state: Expr, operation: Expr = None, dp: bool = False) -> Expr:
+    '''
+    Simplifies an expression describing a SymPy statevector
+
+    :param state: The SymPy statevector to be simplified
+    :type state: Expr
+
+    :param operation: An operation (usually a quantum gate) to apply to the state, defaults to None
+    :type operation: Expr
+
+    :param dp: A boolean determining if the statevector should be dephased, defaults to False
+    :type dp: bool
+
+    :return: The simplified version of the SymPy statevector
+    :rtype: Expr
+
+    '''
     if operation is None:
         if dp:
             return simplify(dephase(qapply((state).doit()))).expand()
@@ -28,7 +56,20 @@ def apply(state: Expr, operation: Expr = None, dp=False) -> Expr:
             return simplify(qapply((operation * state).doit())).expand()
 
 
-def tensor(state1, state2) -> Expr:
+def tensor(state1: Expr, state2: Expr) -> Expr:
+    '''
+    Computes the tensor product of two SymPy statevectors (not fully tested)
+
+    :param state1: The first SymPy statevector in the tensor product
+    :type state1: Expr
+
+    :param state2: The second SymPy statevector in the tensor product
+    :type state2: Expr
+
+    :return: The SymPy statevector representing the tensor product of state1 and state2
+    :rtype: Expr
+    '''
+
     term1 = apply(state1)
     term2 = apply(state2)
 
@@ -67,6 +108,15 @@ def tensor(state1, state2) -> Expr:
 
 
 class Rx(Function):
+    '''
+    A custom quantum gate describing a qubit rotation about the x axis
+
+    :param arg1: The index of the qubit to apply the rotation to
+    :type arg1: int
+
+    :param arg2: The angle by which to rotate the qubit
+    :type arg2: float
+    '''
     def doit(self, **kwargs):
         return cos(self.args[1]/2)*IdentityGate(self.args[0]) - I*sin(self.args[1]/2)*X(self.args[0])
 
@@ -75,6 +125,15 @@ class Rx(Function):
 
 
 class Ry(Function):
+    '''
+    A custom quantum gate describing a qubit rotation about the y axis
+
+    :param arg1: The index of the qubit to apply the rotation to
+    :type arg1: int
+
+    :param arg2: The angle by which to rotate the qubit
+    :type arg2: float
+    '''
     def doit(self, **kwargs):
         return cos(self.args[1]/2)*IdentityGate(self.args[0]) - I*sin(self.args[1]/2)*Y(self.args[0])
 
@@ -83,10 +142,17 @@ class Ry(Function):
 
 
 class Rz(Function):
+    '''
+    A custom quantum gate describing a qubit rotation about the z axis
+
+    :param arg1: The index of the qubit to apply the rotation to
+    :type arg1: int
+
+    :param arg2: The angle by which to rotate the qubit
+    :type arg2: float
+    '''
     def doit(self, **kwargs):
         return cos(self.args[1]/2)*IdentityGate(self.args[0]) - I*sin(self.args[1]/2)*Z(self.args[0])
 
     def _latex(self, printer):
         return r"R_{z, %s}\left(%s\right)" % (latex(self.args[0]), latex(self.args[1]))
-
-

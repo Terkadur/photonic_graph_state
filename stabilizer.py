@@ -194,13 +194,15 @@ class Stabilizer:
                     print('Invalid Stabilizer')
         return [tab, sign]
 
-    def stabilizers(self, color=False):
+    def stabilizers(self, color: bool = False) -> list[str]:
         """
         Returns a list of the stabilizers of the state, as per the tableau
 
-        :return: A list of operations to take a standard state to the given stabilizer state
-        :rtype: list  
+        :param color: A boolean option to color the outputted stabilizers for ease of reading
+        :type color: bool
 
+        :return: A list of operations to take a standard state to the given stabilizer state
+        :rtype: list[str]
         """
         self.__stab = []
         for i in range(self.size):

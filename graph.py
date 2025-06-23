@@ -40,7 +40,16 @@ class Graph:
         plt.show()
 
 
-    def state(self, progress=False) -> Expr:
+    def state(self, progress: bool = False) -> Expr:
+        '''
+        Uses SymPy to calculate the statevector associated with the graph
+
+        :param progress: A boolean option to continuously print out the progress of calculating the state (useful for large graphs), defaults to False
+        :type progress: bool
+
+        :return: A SymPy expression representing the statevector
+        :rtype: Expr
+        '''
         state = Qubit('0'*self.n_qubits)
 
         photons = []
