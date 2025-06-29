@@ -7,20 +7,24 @@ from itertools import permutations
 def rref(state: Stabilizer) -> None:
     N = state.size
     K = N
-    KU = 0
-    NL = 0
+    KU = 0  # stabilizer iterator
+    NL = 0  # qubit iterator
     while NL < N-1 and KU < K-1:
         zeroitem = True
         oneitem = False
         twoitem = False
         r1 = N
         r2 = N
+
+        # look for stabilizer between KU and K that acts on qubit NL. call it r1 and adjust bools
         for k in range(KU, K):
             if state.tab[k, NL] != 0 or state.tab[k, NL+N] != 0:
                 r1 = k
                 zeroitem = False
                 oneitem = True
                 break
+
+        # look for stabilizer between r1 and K that acts on qubit NL, but differently than r1. call it r2 and adjust bools
         for k in range(r1, K):
             if state.tab[k, NL] != 0 or state.tab[k, NL+N] != 0:
                 if state.tab[k, NL] != state.tab[r1, NL] or state.tab[k, NL+N] != state.tab[r1, NL+N]:
@@ -28,8 +32,10 @@ def rref(state: Stabilizer) -> None:
                     oneitem = False
                     twoitem = True
                     break
+
         if zeroitem:
             NL += 1
+
         elif oneitem:
             state.swap(KU, r1)
             for i in range(KU+1, K):
@@ -37,6 +43,7 @@ def rref(state: Stabilizer) -> None:
                     state.row_add(KU, i)
             KU += 1
             NL += 1
+
         elif twoitem:
             state.swap(KU, r1)
             state.swap(KU+1, r2)
@@ -89,7 +96,7 @@ def num_emitters(state: Stabilizer) -> int:
     return emitters
 
 
-def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
+def photonic_circuit_solver(state: Stabilizer, debug: bool = False) -> list[tuple]:
     '''
     INITIAL STEP: determine the number of emitters and initialize variables
     '''
@@ -104,6 +111,12 @@ def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
             target_state.tab[i, j+N] = state.tab[i, j+n_p]
     protocol = []
 
+    if debug:
+        print("INITIAL STEP")
+        for stab in target_state.stabilizers(color=True):
+            print(stab)
+        print()
+
     # loop through the photons in reverse order
     for h in range(n_p, 0, -1):
         '''
@@ -112,6 +125,12 @@ def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
         height = heightfunction(target_state)
         photonindex = h-1
         d = height[h]-height[h-1]
+
+        if debug:
+            print("STEP (I)")
+            for stab in target_state.stabilizers(color=True):
+                print(stab)
+            print()
 
         '''
         STEP (II): if h(j) < h(j-1), do a time reversed measurement
@@ -178,14 +197,20 @@ def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
             target_state.clifford('CNOT', emit, photonindex)
             protocol.append(['Measure', emit, photonindex])
 
-        # transform the stabilizers into the echelon gauge
-        rref(target_state)
+            # transform the stabilizers into the echelon gauge
+            rref(target_state)
+
+            if debug:
+                print("STEP (II)")
+                for stab in target_state.stabilizers(color=True):
+                    print(stab)
+                print()
 
         '''
         STEP (III): do a photon absorption
         '''
         # find stabilizer (row) that acts on no photons but photonindex
-        for i in reversed(range(N)):
+        for i in range(N)[::-1]:
             toggler = True
             if target_state.tab[i, photonindex] == 0 and target_state.tab[i, photonindex+N] == 0:
                 toggler = False
@@ -257,6 +282,12 @@ def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
             if target_state.tab[i, photonindex+N] != 0 or target_state.tab[i, photonindex] != 0:
                 if i != row:
                     target_state.row_add(row, i)
+
+        if debug:
+            print("STEP (III)")
+            for stab in target_state.stabilizers(color=True):
+                print(stab)
+            print()
 
     # transform the stabilizers into the echelon gauge
     rref(target_state)
@@ -354,6 +385,12 @@ def photonic_circuit_solver(state: Stabilizer) -> list[tuple]:
         if target_state.signvector[i] == 1:
             target_state.clifford('X', i)
             protocol.append(['X', i])
+
+    if debug:
+        print("STEP (IV)")
+        for stab in target_state.stabilizers(color=True):
+            print(stab)
+        print()
 
     protocol.reverse()
 
