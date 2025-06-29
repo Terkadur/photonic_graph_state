@@ -7,4 +7,5 @@
 - Fixed row_add() in stabilizer.py, it didn't account for the sign of row1 and used depracated np.complex().
 - Modified photonic_circuit_solver() in protocol.py so that stabilizer signs would be corrected during step (iii), photon absorption. This way emission is always the first operation for each photon.
 - Added photon_permutor() in protocol.py to permute the labelling of photons in a graph state to minimize the number of required emitters.
-- Demonstrated and confirmed photon generation protocols in testing.ipynb.
+- Demonstrated and confirmed photon generation protocols for the examples in [Supplementary Information](https://static-content.springer.com/esm/art%3A10.1038%2Fs41534-022-00522-6/MediaObjects/41534_2022_522_MOESM1_ESM.pdf) in testing.ipynb.
+- Tweaked the order of searching through stabilizers during absorption to hopefully shorten circuits.
